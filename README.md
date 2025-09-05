@@ -7,9 +7,11 @@ Tutorly is a modern tutoring platform designed to make learning more interactive
 
 ## Features
 - 🔎 **Find Tutors**: Browse and connect with tutors based on subjects and expertise.  
-- 📅 **Live Sessions**: Schedule and join real-time learning sessions.  
+- 📅 **Live Sessions**: Schedule and join real-time learning sessions.
+- 🎥 **Sample lesson videos** – preview tutor teaching styles before booking.
 - 👥 **Study Community**: Join group discussions and buddy chats to stay motivated.  
-- 📊 **Progress Tracking**: Monitor your learning streaks, activities, and goals.  
+- 📊 **Progress Tracking**: Monitor your learning streaks, activities, and goals.
+- 🤖 **AI study assistant** – get instant explanations and guidance when a tutor isn’t available. 
 
 ## Tech Stack
 - **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI  
