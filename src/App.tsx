@@ -54,6 +54,24 @@ const SAMPLE_QUESTIONS = [
 ];
 const SUBJECT_TOPIC_MAP: Record<string, string> = { Mathematics: "Algebra", English: "Essay Writing", Physics: "Physics", Chemistry: "Chemistry", Biology: "Biology" };
 
+// ************ MOCK VIDEO LIBRARY (per tutor) ************
+type TutorVideo = { id: string | number; title: string; duration: string; src: string; thumbnail?: string };
+
+const MOCK_TUTOR_VIDEOS: Record<number, TutorVideo[]> = {
+  1: [
+    { id: "a1", title: "Factoring Quadratics — Quick Tips", duration: "08:42", src: "/videos/aisha_factoring.mp4", thumbnail: "/public/FactorQuadratics.jpg" },
+    { id: "a2", title: "Algebra Warm-ups (5 problems)", duration: "12:10", src: "/videos/aisha_warmups.mp4", thumbnail: "/public/AlgebraWarmup.jpg" },
+  ],
+  2: [
+    { id: "b1", title: "Thesis Statements: Do & Don’t", duration: "06:58", src: "/videos/ben_thesis.mp4", thumbnail: "/thumbs/ben1.jpg" },
+  ],
+  3: [
+    { id: "c1", title: "Newton’s 2nd Law: Worked Examples", duration: "09:33", src: "/videos/chen_n2l.mp4", thumbnail: "/thumbs/chen1.jpg" },
+    { id: "c2", title: "Free-Body Diagrams 101", duration: "07:05", src: "/videos/chen_fbd.mp4", thumbnail: "/thumbs/chen2.jpg" },
+  ],
+};
+
+
 /************** FEED HELPERS **************/
 const getFeed = () => { const local = storage.get<any[]>("feed", []); return [...BASE_FEED, ...local]; };
 const pushFeed = (post: any) => { const local = storage.get<any[]>("feed", []); storage.set("feed", [post, ...local]); };
@@ -228,6 +246,8 @@ function AppInner() {
             <Route path="/community" element={<Community />} />
             <Route path="/live" element={<LiveSession />} />
             <Route path="/progress" element={<ProgressPage weakness={weakness} />} />
+            <Route path="/tutors/:tutorId/videos" element={<TutorVideos />} />
+
           </Routes>
 
           <HiddenTests />
@@ -236,7 +256,7 @@ function AppInner() {
 
       <footer className="border-t bg-white/70 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 text-xs text-slate-600 flex items-center gap-4">
-          <span>© {new Date().getFullYear()} Tutorly</span>
+          <span>© {new Date().getFullYear()} TutorGo</span>
           <a className="hover:underline" href="#">Privacy</a>
           <a className="hover:underline" href="#">Terms</a>
           <span className="ml-auto text-[11px]">Prototype v0.1</span>
@@ -273,7 +293,7 @@ function AppHeader({
           className="flex items-center gap-2 rounded-2xl px-3 py-1 text-xl md:text-2xl font-extrabold tracking-tight text-indigo-600 hover:bg-indigo-50 transition-colors"
         >
           <GraduationCap className="w-6 h-6 text-indigo-600" />
-          Tutorly
+          TutorGo
         </Link>
 
 
@@ -439,7 +459,7 @@ function Landing({ onGetStarted }: { onGetStarted: () => void }) {
 
         <div className="mt-8 rounded-2xl bg-white ring-1 ring-slate-200 p-6">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-xl font-bold">Why Tutorly</h2>
+            <h2 className="text-xl font-bold">Why TutorGo</h2>
             <span className="text-xs text-slate-500">Built for effective 1:1 tutoring</span>
           </div>
 
@@ -921,156 +941,1058 @@ function ShortcutTile({
 }
 
 
+/*** AI Assistant Panel (mock) ***/
+function AIAssistantPanel({
+  subjectFilter,
+  highlight = false,
+}: {
+  subjectFilter: string | "all";
+  highlight?: boolean;
+}) {
+  type Msg = { id: string; from: "ai" | "me"; text: string };
+  const [messages, setMessages] = useState<Msg[]>([
+    {
+      id: cryptoId(),
+      from: "ai",
+      text:
+        subjectFilter === "Mathematics"
+          ? "Hi! Stuck on algebra or calculus? Share a problem and I’ll walk through the steps."
+          : subjectFilter === "English"
+          ? "Need help with thesis statements or structure? Paste a prompt and I’ll suggest an outline."
+          : "Ask me any study question—I'll explain step by step.",
+    },
+  ]);
+  const [input, setInput] = useState("");
+
+  // very simple mock reply generator; swap with your backend call
+  const generateAnswer = (q: string) => {
+    const s = subjectFilter;
+    const lower = q.toLowerCase();
+
+    if (s === "Mathematics" || /algebra|equation|solve|quadratic/.test(lower)) {
+      return [
+        "Let’s solve it together. General steps:",
+        "1) Isolate like terms.",
+        "2) If quadratic ax²+bx+c=0, try factoring or quadratic formula.",
+        "3) Substitute back to check.",
+        "Paste your exact problem and I’ll show each step.",
+      ].join("\n");
+    }
+
+    if (s === "English" || /essay|thesis|intro|paragraph/.test(lower)) {
+      return [
+        "Here’s a quick structure you can use:",
+        "• Hook (1–2 sentences)",
+        "• Context (2–3 sentences)",
+        "• Clear thesis with stance",
+        "Send me your prompt; I’ll draft a thesis and topic sentences.",
+      ].join("\n");
+    }
+
+    if (s === "Physics" || /force|newton|velocity|acceleration/.test(lower)) {
+      return [
+        "Tip: Start from known laws (e.g., F = m·a).",
+        "• Draw a free-body diagram",
+        "• Write equations along each axis",
+        "• Solve, then check units",
+        "Share the numbers; I’ll compute it with you.",
+      ].join("\n");
+    }
+
+    return "Got it! Tell me the exact question (and any numbers); I’ll break it down step by step.";
+  };
+
+  const send = () => {
+    const text = input.trim();
+    if (!text) return;
+    const my: Msg = { id: cryptoId(), from: "me", text };
+    setMessages((m) => [...m, my]);
+    setInput("");
+
+    // mock async AI response
+    setTimeout(() => {
+      const ai: Msg = { id: cryptoId(), from: "ai", text: generateAnswer(text) };
+      setMessages((m) => [...m, ai]);
+    }, 450);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  };
+
+  return (
+    <Card className={`rounded-2xl ${highlight ? "border-2 border-violet-300" : ""}`}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-violet-600" />
+          Ask AI Tutor
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Can’t find a tutor? Get instant help while you search.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* history */}
+        <div className="max-h-56 overflow-auto space-y-2 pr-1">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`text-sm px-3 py-2 rounded-xl ${
+                m.from === "me"
+                  ? "bg-slate-900 text-white ml-auto max-w-[80%] rounded-br-md"
+                  : "bg-slate-50 border max-w-[85%] rounded-bl-md"
+              }`}
+              style={{ width: "fit-content" }}
+            >
+              {m.text.split("\n").map((line, i) => (
+                <div key={i}>{line}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* input */}
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder={
+              subjectFilter === "Mathematics"
+                ? "e.g., How to solve 2x + 6 = 14?"
+                : subjectFilter === "English"
+                ? "e.g., Help me write a thesis on climate policy"
+                : "Ask a study question…"
+            }
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={onKeyDown}
+            className="rounded-2xl"
+          />
+          <Button className="rounded-2xl" onClick={send}>
+            <Sparkles className="w-4 h-4 mr-1" />
+            Ask
+          </Button>
+        </div>
+
+        {/* quick suggestions */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {subjectFilter === "Mathematics" && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                onClick={() => setInput("Factor x^2 + 5x + 6")}
+              >
+                Factor x²+5x+6
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                onClick={() => setInput("Explain quadratic formula")}
+              >
+                Quadratic formula
+              </Button>
+            </>
+          )}
+          {subjectFilter === "English" && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                onClick={() => setInput("Thesis for school uniforms debate")}
+              >
+                Thesis help
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                onClick={() => setInput("Outline for persuasive essay")}
+              >
+                Essay outline
+              </Button>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 /************** TUTOR DISCOVERY **************/
 function TutorDiscovery({ onNavigatePath }: { onNavigatePath: (s: Screen) => void }) {
   const [subjectFilter, setSubjectFilter] = useState<string | "all">("all");
-  const tutors = useMemo(() => (subjectFilter === "all" ? MOCK_TUTORS : MOCK_TUTORS.filter((t) => t.subject === subjectFilter)), [subjectFilter]);
+  const tutors = useMemo(
+    () =>
+      subjectFilter === "all"
+        ? MOCK_TUTORS
+        : MOCK_TUTORS.filter((t) => t.subject === subjectFilter),
+    [subjectFilter]
+  );
+
+  // --- NEW: saved tutor ids (persisted) ---
+  const [savedIds, setSavedIds] = useState<number[]>(
+    () => storage.get<number[]>("saved_tutors", [])
+  );
+  const isSaved = (id: number) => savedIds.includes(id);
+  const toggleSave = (id: number) => {
+    setSavedIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev];
+      storage.set("saved_tutors", next);
+      return next;
+    });
+  };
+
+  // --- NEW: open message dialog for a saved tutor ---
+  const [msgOpen, setMsgOpen] = useState(false);
+  const [msgTutor, setMsgTutor] = useState<typeof MOCK_TUTORS[number] | null>(null);
+  const openMessage = (tutor: typeof MOCK_TUTORS[number]) => {
+    setMsgTutor(tutor);
+    setMsgOpen(true);
+  };
+
   const [booking, setBooking] = useState<{ tutor?: any; slot?: string } | null>(null);
+
   return (
     <section className="w-full">
-
       <section className="space-y-4">
+        {/* Filter row */}
         <div className="flex flex-wrap items-center gap-3">
           <Select value={subjectFilter} onValueChange={(v) => setSubjectFilter(v as any)}>
-            <SelectTrigger className="w-56"><SelectValue placeholder="Filter by subject" /></SelectTrigger>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Filter by subject" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Subjects</SelectItem>
-              {[...new Set(MOCK_TUTORS.map((t) => t.subject))].map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}
+              {[...new Set(MOCK_TUTORS.map((t) => t.subject))].map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <div className="text-sm text-slate-500">{tutors.length} tutors</div>
         </div>
+
+        {/* AI Tutor panel first */}
+        <AIAssistantPanel subjectFilter={subjectFilter} highlight />
+
+        {/* NEW: Saved Tutors panel */}
+        <SavedTutorsPanel
+          savedIds={savedIds}
+          onMessage={openMessage}
+          onUnsave={(id) => toggleSave(id)}
+        />
+
+        {/* Tutor cards */}
         <div className="grid md:grid-cols-3 gap-3">
           {tutors.map((t) => (
             <Card key={t.id} className="rounded-2xl">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <Avatar><AvatarFallback>{t.name.split(" ")[1]?.[0] || t.name[0]}</AvatarFallback></Avatar>
-                  <div><CardTitle className="text-lg">{t.name}</CardTitle><CardDescription>{t.subject} • ⭐ {t.rating} • ${t.price}/hr</CardDescription></div>
+                  <Avatar>
+                    <AvatarFallback>{t.name.split(" ")[1]?.[0] || t.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <CardTitle className="text-lg">{t.name}</CardTitle>
+                    <CardDescription>
+                      {t.subject} • ⭐ {t.rating} • ${t.price}/hr
+                    </CardDescription>
+                  </div>
                 </div>
               </CardHeader>
+
               <CardContent className="space-y-2 text-sm">
                 <p>{t.bio}</p>
-                <div className="flex flex-wrap gap-2">{t.availability.map((s: string) => (<Badge key={s} variant="secondary" className="rounded-full">{s}</Badge>))}</div>
+                <div className="flex flex-wrap gap-2">
+                  {t.availability.map((s: string) => (
+                    <Badge key={s} variant="secondary" className="rounded-full">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+
+                {/* NEW: tiny row to Save / Message */}
+                <div className="pt-1 flex items-center gap-2 text-xs">
+                  <Button
+                    size="sm"
+                    variant={isSaved(t.id) ? "default" : "outline"}
+                    className="rounded-full h-7 px-3"
+                    onClick={() => toggleSave(t.id)}
+                  >
+                    {isSaved(t.id) ? "Saved" : "Save"}
+                  </Button>
+                  {isSaved(t.id) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full h-7 px-3"
+                      onClick={() => openMessage(t)}
+                    >
+                      Message
+                    </Button>
+                  )}
+                </div>
               </CardContent>
-              <CardFooter><Button className="w-full rounded-xl" onClick={() => setBooking({ tutor: t })}>Book Session</Button></CardFooter>
+
+              <CardFooter className="flex gap-2">
+                <Button className="w-full rounded-xl" onClick={() => setBooking({ tutor: t })}>
+                  Book Session
+                </Button>
+                <Link to={`/tutors/${t.id}/videos`} className="w-full">
+                  <Button variant="outline" className="w-full rounded-xl">
+                    Sample Lesson
+                  </Button>
+                </Link>
+              </CardFooter>
             </Card>
           ))}
         </div>
+
         {booking?.tutor && (
           <Card className="rounded-2xl border-2">
-            <CardHeader><CardTitle>Book with {booking.tutor.name}</CardTitle><CardDescription>Select a time slot</CardDescription></CardHeader>
-            <CardContent className="space-y-3"><div className="flex flex-wrap gap-2">{booking.tutor.availability.map((s: string) => (<Button key={s} variant={booking.slot === s ? "default" : "outline"} className="rounded-full" onClick={() => setBooking({ ...booking, slot: s })}>{s}</Button>))}</div></CardContent>
-            <CardFooter className="gap-2"><Button variant="outline" className="rounded-xl" onClick={() => setBooking(null)}>Cancel</Button><Button disabled={!booking.slot} className="rounded-xl" onClick={() => { onNavigatePath("tutors"); toast.success(`Booked ${booking.tutor.name} at ${booking.slot}!`); setBooking(null); }}>Confirm Booking</Button></CardFooter>
+            <CardHeader>
+              <CardTitle>Book with {booking.tutor.name}</CardTitle>
+              <CardDescription>Select a time slot</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {booking.tutor.availability.map((s: string) => (
+                  <Button
+                    key={s}
+                    variant={booking.slot === s ? "default" : "outline"}
+                    className="rounded-full"
+                    onClick={() => setBooking({ ...booking, slot: s })}
+                  >
+                    {s}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="gap-2">
+              <Button variant="outline" className="rounded-xl" onClick={() => setBooking(null)}>
+                Cancel
+              </Button>
+              <Button
+                disabled={!booking.slot}
+                className="rounded-xl"
+                onClick={() => {
+                  onNavigatePath("tutors");
+                  toast.success(`Booked ${booking.tutor.name} at ${booking.slot}!`);
+                  setBooking(null);
+                }}
+              >
+                Confirm Booking
+              </Button>
+            </CardFooter>
           </Card>
         )}
+
+        {/* NEW: Message dialog */}
+        <MessageTutorDialog
+          open={msgOpen}
+          onOpenChange={setMsgOpen}
+          tutor={msgTutor}
+        />
       </section>
     </section>
   );
 }
 
-/************** STUDY BUDDY **************/
+/************** SAVED TUTORS PANEL **************/
+function SavedTutorsPanel({
+  savedIds,
+  onMessage,
+  onUnsave,
+}: {
+  savedIds: number[];
+  onMessage: (tutor: typeof MOCK_TUTORS[number]) => void;
+  onUnsave: (id: number) => void;
+}) {
+  const saved = MOCK_TUTORS.filter((t) => savedIds.includes(t.id));
+  if (saved.length === 0) return null;
+
+  return (
+    <Card className="rounded-2xl">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">Saved Tutors</CardTitle>
+        <CardDescription className="text-xs">
+          Tutors you shortlisted — message them anytime.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {saved.map((t) => (
+          <div
+            key={t.id}
+            className="flex items-center justify-between gap-3 p-2 rounded-lg border bg-white"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <Avatar className="w-8 h-8 ring-1 ring-slate-200">
+                <AvatarFallback>{t.name.split(" ")[1]?.[0] || t.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <div className="font-medium truncate">{t.name}</div>
+                <div className="text-[11px] text-slate-500 truncate">
+                  {t.subject} • ⭐ {t.rating} • ${t.price}/hr
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button size="sm" className="rounded-full h-8 px-3" onClick={() => onMessage(t)}>
+                Message
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full h-8 px-3"
+                onClick={() => onUnsave(t.id)}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+/************** MESSAGE TUTOR DIALOG **************/
+function MessageTutorDialog({
+  open,
+  onOpenChange,
+  tutor,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  tutor: typeof MOCK_TUTORS[number] | null;
+}) {
+  type ChatMsg = { id: string; from: "me" | "them"; text: string; ts: number };
+
+  const threadKey = tutor ? `tutor_thread_${tutor.id}` : "";
+  const loadThread = (): ChatMsg[] => {
+    if (!tutor) return [];
+    try {
+      const raw = localStorage.getItem(threadKey);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [messages, setMessages] = useState<ChatMsg[]>(loadThread);
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    // reload when tutor changes
+    setMessages(loadThread());
+    setText("");
+  }, [tutor?.id]);
+
+  useEffect(() => {
+    // persist thread
+    if (tutor) localStorage.setItem(threadKey, JSON.stringify(messages));
+  }, [messages, tutor, threadKey]);
+
+  const send = () => {
+    const t = text.trim();
+    if (!t || !tutor) return;
+    const now = Date.now();
+    const mine: ChatMsg = { id: cryptoId(), from: "me", text: t, ts: now };
+    const reply: ChatMsg = {
+      id: cryptoId(),
+      from: "them",
+      text: `Thanks for reaching out! I can help with ${tutor.subject}.`,
+      ts: now + 500,
+    };
+    setMessages((m) => [...m, mine]);
+    setText("");
+    setTimeout(() => setMessages((m) => [...m, reply]), 500);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeaderUI>
+          <DialogTitleUI>
+            {tutor ? `Chat with ${tutor.name}` : "Message Tutor"}
+          </DialogTitleUI>
+        </DialogHeaderUI>
+
+        {!tutor ? (
+          <div className="text-sm text-slate-500">Select a tutor to start chatting.</div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Avatar className="w-8 h-8 ring-1 ring-slate-200">
+                <AvatarFallback>{tutor.name.split(" ")[1]?.[0] || tutor.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="text-sm">
+                <div className="font-medium">{tutor.name}</div>
+                <div className="text-slate-500 text-xs">{tutor.subject}</div>
+              </div>
+            </div>
+
+            {/* history */}
+            <div className="max-h-64 overflow-auto space-y-2 pr-1 border rounded-lg p-2 bg-slate-50">
+              {messages.length === 0 && (
+                <div className="text-xs text-slate-500">No messages yet. Say hi!</div>
+              )}
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`text-sm px-3 py-2 rounded-xl w-fit ${
+                    m.from === "me"
+                      ? "bg-slate-900 text-white ml-auto rounded-br-md"
+                      : "bg-white border rounded-bl-md"
+                  }`}
+                >
+                  {m.text}
+                </div>
+              ))}
+            </div>
+
+            {/* input */}
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Type your message…"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={onKeyDown}
+                className="rounded-2xl"
+              />
+              <Button className="rounded-2xl" onClick={send}>Send</Button>
+            </div>
+          </div>
+        )}
+
+        <DialogFooterUI className="gap-2">
+          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooterUI>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+
+/*** Tutor Videos ***/
+import { useParams } from "react-router-dom";
+import { Play } from "lucide-react";
+function TutorVideos() {
+  const { tutorId } = useParams();
+  const navigate = useNavigate();
+
+  const idNum = Number(tutorId);
+  const tutor = MOCK_TUTORS.find((t) => t.id === idNum);
+  const videos = MOCK_TUTOR_VIDEOS[idNum] || [];
+
+  // refs to control multiple videos
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const [playingId, setPlayingId] = useState<string | null>(null);
+
+  const playThis = (id: string | number) => {
+    const key = String(id);
+    // pause all other videos
+    Object.entries(videoRefs.current).forEach(([vid, el]) => {
+      if (vid !== key && el && !el.paused) el.pause();
+    });
+    const el = videoRefs.current[key];
+    if (el) {
+      el.play();
+      setPlayingId(key);
+    }
+  };
+
+  const onVideoPlay = (id: string | number) => {
+    const key = String(id);
+    Object.entries(videoRefs.current).forEach(([vid, el]) => {
+      if (vid !== key && el && !el.paused) el.pause();
+    });
+    setPlayingId(key);
+  };
+
+  const onVideoPause = (id: string | number) => {
+    const key = String(id);
+    if (playingId === key) setPlayingId(null);
+  };
+
+  return (
+    <section className="w-full">
+      <div className="max-w-5xl mx-auto">
+        <Card className="rounded-2xl overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <CardTitle className="text-lg">
+                  {tutor
+                    ? `${tutor.name} — Video Library`
+                    : "Tutor Video Library"}
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  {tutor
+                    ? `${tutor.subject} · ⭐ ${tutor.rating} · $${tutor.price}/hr`
+                    : "Curated uploads"}
+                </CardDescription>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="rounded-xl"
+                  onClick={() => navigate(-1)}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Back
+                </Button>
+
+                {tutor && (
+                  <Button
+                    className="rounded-xl"
+                    onClick={() => navigate("/tutors")}
+                  >
+                    Find more tutors
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            {videos.length === 0 ? (
+              <div className="text-sm text-slate-500">
+                No videos uploaded yet.
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {videos.map((v) => (
+                  <div
+                    key={v.id}
+                    className="rounded-xl border bg-white overflow-hidden"
+                  >
+                    <div className="relative">
+                      <video
+                        ref={(el) => {
+                          videoRefs.current[String(v.id)] = el;
+                        }}
+                        className="w-full aspect-video rounded-b-none"
+                        controls
+                        preload="metadata"
+                        src={v.src}
+                        poster={v.thumbnail}
+                        onPlay={() => onVideoPlay(v.id)}
+                        onPause={() => onVideoPause(v.id)}
+                      />
+
+                      {/* Overlay play button, only when not playing */}
+                      {playingId !== String(v.id) && (
+                        <button
+                          type="button"
+                          className="absolute inset-0 flex items-center justify-center"
+                          onClick={() => playThis(v.id)}
+                          aria-label="Play video"
+                        >
+                          <span className="rounded-full bg-white/95 hover:bg-white shadow px-4 py-2 flex items-center gap-2 transition">
+                            <Play className="w-4 h-4" />
+                          </span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{v.title}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            {v.duration}
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="rounded-full">
+                          {tutor?.subject ?? "Video"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+/************** STUDY BUDDY (Colorful) **************/
 type ChatMsg = { id: string; text: string; ts: number; from: "me" | "them" };
+
+// Subject → tones
+const toneFor = (subject?: string) => {
+  switch (subject) {
+    case "Mathematics":
+      return { chip: "bg-indigo-100 text-indigo-700 ring-indigo-300", row: "hover:bg-indigo-50", header: "from-indigo-500 to-indigo-600", btn: "bg-indigo-600 hover:bg-indigo-700 text-white" };
+    case "English":
+      return { chip: "bg-rose-100 text-rose-700 ring-rose-300", row: "hover:bg-rose-50", header: "from-rose-500 to-rose-600", btn: "bg-rose-600 hover:bg-rose-700 text-white" };
+    case "Physics":
+      return { chip: "bg-violet-100 text-violet-700 ring-violet-300", row: "hover:bg-violet-50", header: "from-violet-500 to-violet-600", btn: "bg-violet-600 hover:bg-violet-700 text-white" };
+    case "Chemistry":
+      return { chip: "bg-emerald-100 text-emerald-700 ring-emerald-300", row: "hover:bg-emerald-50", header: "from-emerald-500 to-emerald-600", btn: "bg-emerald-600 hover:bg-emerald-700 text-white" };
+    case "Biology":
+      return { chip: "bg-teal-100 text-teal-700 ring-teal-300", row: "hover:bg-teal-50", header: "from-teal-500 to-teal-600", btn: "bg-teal-600 hover:bg-teal-700 text-white" };
+    default:
+      return { chip: "bg-slate-100 text-slate-700 ring-slate-300", row: "hover:bg-slate-50", header: "from-slate-500 to-slate-600", btn: "bg-slate-600 hover:bg-slate-700 text-white" };
+  }
+};
+
 function StudyBuddy({ onNavigatePath }: { onNavigatePath: (s: Screen) => void }) {
   const [selected, setSelected] = useState<typeof MOCK_BUDDIES[number] | null>(MOCK_BUDDIES[0]);
   const [threads, setThreads] = useState<Record<number, ChatMsg[]>>(() => {
-    const seed: Record<number, ChatMsg[]> = {}; for (const b of MOCK_BUDDIES) { seed[b.id] = [{ id: "t1", text: `Hey ${b.name}! Want to revise ${b.subject} later?`, ts: Date.now() - 1000 * 60 * 60 * 22, from: "me" }, { id: "t2", text: "Sure! I’m free after 9pm.", ts: Date.now() - 1000 * 60 * 60 * 21.5, from: "them" },]; } return seed;
+    const seed: Record<number, ChatMsg[]> = {};
+    for (const b of MOCK_BUDDIES) {
+      seed[b.id] = [
+        { id: "t1", text: `Hey ${b.name}! Want to revise ${b.subject} later?`, ts: Date.now() - 1000 * 60 * 60 * 22, from: "me" },
+        { id: "t2", text: "Sure! I’m free after 9pm.", ts: Date.now() - 1000 * 60 * 60 * 21.5, from: "them" },
+      ];
+    }
+    return seed;
   });
+
   return (
     <section className="grid md:grid-cols-[320px_minmax(0,1fr)] gap-4 min-h-[calc(100vh-160px)]">
-      <Card className="overflow-hidden rounded-2xl flex flex-col">
-        <CardHeader className="py-3"><CardTitle className="text-lg">Chats</CardTitle><CardDescription>Study buddies</CardDescription></CardHeader>
-        <CardContent className="p-0 flex-1 overflow-auto"><div className="border-t">{MOCK_BUDDIES.map((b) => {
-          const msgs = threads[b.id] || []; const last = msgs[msgs.length - 1]; const isActive = selected?.id === b.id; return (
-            <button key={b.id} onClick={() => setSelected(b)} className={`w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-slate-50 transition ${isActive ? "bg-slate-50" : ""}`}>
-              <Avatar className="w-9 h-9 shrink-0 ring-1 ring-slate-200"><AvatarFallback>{b.name[0]}</AvatarFallback></Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0"><div className="font-medium truncate">{b.name}</div><span className="rounded-full text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 shrink-0">{b.subject}</span></div>
-                  <div className="text-[11px] text-slate-500 shrink-0">{last ? timeShort(last.ts) : ""}</div>
-                </div>
-                <div className="mt-1 text-xs text-slate-500 truncate">{last ? last.text : "No messages yet"}</div>
-              </div>
-            </button>
-          );
-        })}</div></CardContent>
+      {/* Left chat list */}
+      <Card className="overflow-hidden rounded-2xl flex flex-col border border-slate-200 bg-white">
+        <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white">
+          <div className="px-4 py-3">
+            <div className="text-lg font-semibold">Chats</div>
+            <div className="text-xs text-white/90">Study buddies</div>
+          </div>
+        </div>
+        <CardContent className="p-0 flex-1 overflow-auto">
+          <div className="border-t">
+            {MOCK_BUDDIES.map((b) => {
+              const msgs = threads[b.id] || [];
+              const last = msgs[msgs.length - 1];
+              const isActive = selected?.id === b.id;
+              const tones = toneFor(b.subject);
+              return (
+                <button
+                  key={b.id}
+                  onClick={() => setSelected(b)}
+                  className={`w-full text-left px-4 py-3 flex items-start gap-3 transition ${tones.row} ${isActive ? "bg-slate-50" : ""}`}
+                >
+                  <Avatar className="w-9 h-9 shrink-0 ring-2 ring-offset-1 ring-indigo-300">
+                    <AvatarFallback>{b.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="font-medium truncate text-slate-900">{b.name}</div>
+                        <span className={`rounded-full text-[10px] px-2 py-0.5 ring-1 ${tones.chip}`}>{b.subject}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 shrink-0">{last ? timeShort(last.ts) : ""}</div>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-600 truncate">{last ? last.text : "No messages yet"}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
       </Card>
-      <Card className="rounded-2xl overflow-hidden flex flex-col">
+
+      {/* Right chat window */}
+      <Card className="rounded-2xl overflow-hidden flex flex-col border border-slate-200 bg-white">
         {selected ? (
-          <ChatWindow buddy={selected} messages={threads[selected.id] || []} onSend={(text) => { const buddyId = selected.id; const now = Date.now(); const myMsg: ChatMsg = { id: cryptoId(), text, ts: now, from: "me" }; const theirMsg: ChatMsg = { id: cryptoId(), text: "Got it 👍 See you later!", ts: now + 600, from: "them" }; setThreads((prev) => { const arr = [...(prev[buddyId] || []), myMsg]; return { ...prev, [buddyId]: arr }; }); setTimeout(() => setThreads((prev) => { const arr = [...(prev[buddyId] || []), theirMsg]; return { ...prev, [buddyId]: arr }; }), 600); }} />
-        ) : (<div className="grid place-items-center flex-1 text-sm text-slate-500">Select a buddy to start chatting</div>)}
+          <ChatWindow buddy={selected} messages={threads[selected.id] || []} onSend={(text) => {
+            const buddyId = selected.id;
+            const now = Date.now();
+            const myMsg: ChatMsg = { id: cryptoId(), text, ts: now, from: "me" };
+            const theirMsg: ChatMsg = { id: cryptoId(), text: "Got it 👍 See you later!", ts: now + 600, from: "them" };
+            setThreads((prev) => ({ ...prev, [buddyId]: [...(prev[buddyId] || []), myMsg] }));
+            setTimeout(() => setThreads((prev) => ({ ...prev, [buddyId]: [...(prev[buddyId] || []), theirMsg] })), 600);
+          }} />
+        ) : (
+          <div className="grid place-items-center flex-1 text-sm text-slate-500">Select a buddy to start chatting</div>
+        )}
       </Card>
     </section>
   );
 }
-function ChatWindow({ buddy, messages, onSend }: { buddy: { id: number; name: string; subject: string }; messages: ChatMsg[]; onSend: (text: string) => void; }) {
-  const [text, setText] = useState(""); const viewportRef = useRef<HTMLDivElement | null>(null); const [typing, setTyping] = useState(false);
-  useEffect(() => { const el = viewportRef.current; if (!el) return; el.scrollTop = el.scrollHeight; }, [messages.length]);
-  const handleSend = () => { const t = text.trim(); if (!t) return; onSend(t); setText(""); setTyping(true); setTimeout(() => setTyping(false), 1200); };
-  const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } };
+
+function ChatWindow({
+  buddy,
+  messages,
+  onSend,
+}: {
+  buddy: { id: number; name: string; subject: string };
+  messages: ChatMsg[];
+  onSend: (text: string) => void;
+}) {
+  const [text, setText] = useState("");
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages.length]);
+
+  const handleSend = () => {
+    const t = text.trim();
+    if (!t) return;
+    onSend(t);
+    setText("");
+    setTyping(true);
+    setTimeout(() => setTyping(false), 1200);
+  };
+
+  const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      <div className="px-4 py-3 border-b bg-white/70 backdrop-blur flex items-center gap-3">
-        <Avatar className="w-9 h-9 shrink-0 ring-1 ring-slate-200"><AvatarFallback>{buddy.name[0]}</AvatarFallback></Avatar>
-        <div className="min-w-0"><div className="font-medium leading-tight truncate">{buddy.name}</div><div className="text-xs text-slate-500 truncate">Subject: <span className="font-medium">{buddy.subject}</span> · <span className="text-emerald-600">{typing ? "typing…" : "online"}</span></div></div>
+      {/* Gradient Header */}
+      <div className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white flex items-center gap-3">
+        <Avatar className="w-9 h-9 shrink-0 ring-1 ring-white/30">
+          <AvatarFallback className="bg-white text-indigo-600 font-bold">
+            {buddy.name[0]}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <div className="font-medium leading-tight truncate">{buddy.name}</div>
+          <div className="text-xs text-white/90 truncate">
+            Subject: <span className="font-medium">{buddy.subject}</span> ·{" "}
+            <span className="text-emerald-200">{typing ? "typing…" : "online"}</span>
+          </div>
+        </div>
       </div>
-      <div ref={viewportRef} className="flex-1 min-h-0 overflow-y-auto bg-[rgb(248,250,252)] p-3">
-        {messages.map((m) => (<ChatBubble key={m.id} you={m.from === "me"} ts={m.ts}>{m.text}</ChatBubble>))}
+
+      {/* Chat messages */}
+      <div
+        ref={viewportRef}
+        className="flex-1 min-h-0 overflow-y-auto bg-[rgb(248,250,252)] p-3"
+      >
+        {messages.map((m) => (
+          <ChatBubble key={m.id} you={m.from === "me"} ts={m.ts}>
+            {m.text}
+          </ChatBubble>
+        ))}
       </div>
-      <div className="p-3 border-t bg-white"><div className="flex items-center gap-2"><Input placeholder="Type a message" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKey} className="rounded-2xl" /><Button className="rounded-2xl" onClick={handleSend}>Send</Button></div></div>
-    </div>
-  );
-}
-function ChatBubble({ children, you, ts }: { children: React.ReactNode; you?: boolean; ts?: number }) {
-  return (
-    <div className={`flex ${you ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm ${you ? "bg-slate-900 text-white rounded-br-md" : "bg-white border rounded-bl-md"}`}>
-        <div>{children}</div>
-        {!!ts && (<div className={`mt-1 text-[10px] flex items-center gap-1 ${you ? "text-slate-300" : "text-slate-500"}`}>{timeShort(ts)} {you && <Check className="w-3 h-3 inline-block" />}</div>)}
+
+      {/* Input bar */}
+      <div className="p-3 border-t bg-white">
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Type a message"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKey}
+            className="rounded-2xl"
+          />
+          <Button className="rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90">
+            Send
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
 
-/************** COMMUNITY **************/
+
+function ChatBubble({ children, you, ts }: { children: React.ReactNode; you?: boolean; ts?: number }) {
+  return (
+    <div className={`flex ${you ? "justify-end" : "justify-start"}`}>
+      <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm ${you ? "bg-slate-900 text-white rounded-br-md" : "bg-white border border-slate-200 text-slate-800 rounded-bl-md"}`}>
+        <div>{children}</div>
+        {!!ts && (
+          <div className={`mt-1 text-[10px] flex items-center gap-1 ${you ? "text-slate-300" : "text-slate-500"}`}>
+            {timeShort(ts)} {you && <Check className="w-3 h-3 inline-block" />}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
+
+/************** Community (Unified Blue) **************/
+/************** Community (Indigo-Violet Blue) **************/
 function Community() {
   const [feed, setFeed] = useState(getFeed());
   const [post, setPost] = useState("");
   const [streak, setStreak] = useState(getInitialStreak());
+
   type Suggestion = { id: number; name: string; subjects: string[]; mutuals: number };
-  const initialSuggestions: Suggestion[] = [{ id: 201, name: "Nadia", subjects: ["Mathematics", "Physics"], mutuals: 3 }, { id: 202, name: "Irfan", subjects: ["English", "Essay Writing"], mutuals: 2 }, { id: 203, name: "Sofia", subjects: ["Biology", "Chemistry"], mutuals: 1 }, { id: 204, name: "Ken", subjects: ["Mathematics", "Chemistry"], mutuals: 4 }];
-  const [suggestions, setSuggestions] = useState<Suggestion[]>(() => storage.get("pymk", initialSuggestions));
-  const saveSuggestions = (list: Suggestion[]) => { setSuggestions(list); storage.set("pymk", list); };
-  const addPost = () => { if (!post.trim()) return; const newPost = { id: Math.random(), name: "You", content: post, ts: new Date().toISOString().slice(0, 10) }; pushFeed(newPost); setFeed(getFeed()); setPost(""); toast.success("Posted"); };
-  const checkIn = () => { const s = streak + 1; setStreak(s); localStorage.setItem("streak", String(s)); toast.success("Checked in!"); };
-  const connectWith = (s: Suggestion) => { pushFeed({ id: Math.random(), name: "You", content: `connected with ${s.name} 🎉`, ts: new Date().toISOString().slice(0, 10) }); setFeed(getFeed()); saveSuggestions(suggestions.filter(x => x.id !== s.id)); };
+
+  const initialSuggestions: Suggestion[] = [
+    { id: 201, name: "Nadia", subjects: ["Mathematics", "Physics"], mutuals: 3 },
+    { id: 202, name: "Irfan", subjects: ["English", "Essay Writing"], mutuals: 2 },
+    { id: 203, name: "Sofia", subjects: ["Biology", "Chemistry"], mutuals: 1 },
+    { id: 204, name: "Ken", subjects: ["Mathematics", "Chemistry"], mutuals: 4 },
+  ];
+
+  const [suggestions, setSuggestions] = useState<Suggestion[]>(() =>
+    storage.get("pymk", initialSuggestions)
+  );
+
+  const saveSuggestions = (list: Suggestion[]) => {
+    setSuggestions(list);
+    storage.set("pymk", list);
+  };
+
+  const addPost = () => {
+    if (!post.trim()) return;
+    const newPost = {
+      id: Math.random(),
+      name: "You",
+      content: post,
+      ts: new Date().toISOString().slice(0, 10),
+    };
+    pushFeed(newPost);
+    setFeed(getFeed());
+    setPost("");
+    toast.success("Posted");
+  };
+
+  const checkIn = () => {
+    const s = streak + 1;
+    setStreak(s);
+    localStorage.setItem("streak", String(s));
+    toast.success("Checked in!");
+  };
+
+  const connectWith = (s: Suggestion) => {
+    pushFeed({
+      id: Math.random(),
+      name: "You",
+      content: `connected with ${s.name} 🎉`,
+      ts: new Date().toISOString().slice(0, 10),
+    });
+    setFeed(getFeed());
+    saveSuggestions(suggestions.filter((x) => x.id !== s.id));
+  };
+
   return (
     <section className="grid md:grid-cols-3 gap-4">
-      <Card className="md:col-span-2">
-        <CardHeader><CardTitle>Community Feed</CardTitle><CardDescription>Share progress & keep each other accountable</CardDescription></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex gap-2"><Input placeholder="Share an update…" value={post} onChange={(e) => setPost(e.target.value)} /><Button className="rounded-xl" onClick={addPost}>Post</Button></div>
-          <div className="space-y-3">{feed.map(item => (
-            <Card key={item.id} className="rounded-xl">
-              <CardHeader className="pb-2"><div className="flex items-start gap-2"><Avatar className="w-8 h-8 shrink-0 ring-1 ring-slate-200"><AvatarFallback className="text-xs">{item.name[0]}</AvatarFallback></Avatar><div className="text-sm leading-tight"><span className="font-medium">{item.name}</span> <span className="text-slate-500">• {item.ts}</span></div></div></CardHeader>
-              <CardContent className="pt-0 text-sm">{item.content}</CardContent>
-            </Card>
-          ))}</div>
+      {/* Feed */}
+      <Card className="md:col-span-2 rounded-2xl overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white px-4 py-3">
+          <CardTitle className="text-lg">Community Feed</CardTitle>
+          <CardDescription className="text-xs text-white/80">
+            Share progress & keep each other accountable
+          </CardDescription>
+        </div>
+        <CardContent className="space-y-3 mt-3">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Share an update…"
+              value={post}
+              onChange={(e) => setPost(e.target.value)}
+              className="rounded-xl"
+            />
+            <Button
+              className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90"
+              onClick={addPost}
+            >
+              Post
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {feed.map((item) => (
+              <Card key={item.id} className="rounded-xl hover:shadow-md transition">
+                <CardHeader className="pb-2">
+                  <div className="flex items-start gap-2">
+                    <Avatar className="w-8 h-8 shrink-0 ring-1 ring-indigo-200">
+                      <AvatarFallback className="text-xs bg-indigo-100 text-indigo-700">
+                        {item.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-sm leading-tight">
+                      <span className="font-medium">{item.name}</span>{" "}
+                      <span className="text-slate-500">• {item.ts}</span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0 text-sm">{item.content}</CardContent>
+              </Card>
+            ))}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Suggestions */}
       <div className="space-y-4">
         <Card className="rounded-2xl">
           <CardHeader><CardTitle>People You May Know</CardTitle><CardDescription>Connect with learners who share your interests</CardDescription></CardHeader>
           <CardContent className="space-y-3">
             {suggestions.length === 0 && (<div className="text-sm text-slate-500">No more suggestions for now.</div>)}
             {suggestions.map((s) => (
-              <div key={s.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-50 transition">
-                <Avatar className="w-9 h-9 shrink-0 ring-1 ring-slate-200"><AvatarFallback>{s.name[0]}</AvatarFallback></Avatar>
+              <div
+                key={s.id}
+                className="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-50 transition"
+              >
+                <Avatar className="w-9 h-9 shrink-0 ring-1 ring-indigo-200">
+                  <AvatarFallback className="bg-indigo-100 text-indigo-700">
+                    {s.name[0]}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-2"><div className="font-medium truncate leading-tight">{s.name}</div><div className="text-[11px] text-slate-500 whitespace-nowrap">{s.mutuals} mutual</div></div>
-                  <div className="mt-1 flex flex-wrap gap-1">{s.subjects.map(sub => (<span key={sub} className="rounded-full text-xs px-2 py-0.5 bg-slate-100 text-slate-600">{sub}</span>))}</div>
-                  <div className="mt-2 flex gap-2"><Button size="sm" className="rounded-xl" onClick={() => connectWith(s)}>Connect</Button><Button size="sm" variant="outline" className="rounded-xl" onClick={() => saveSuggestions(suggestions.filter(x => x.id !== s.id))}>Remove</Button></div>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="font-medium truncate leading-tight">{s.name}</div>
+                    <div className="text-[11px] text-slate-500 whitespace-nowrap">
+                      {s.mutuals} mutual
+                    </div>
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {s.subjects.map((sub) => (
+                      <span
+                        key={sub}
+                        className="rounded-full text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700"
+                      >
+                        {sub}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90"
+                      onClick={() => connectWith(s)}
+                    >
+                      Connect
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl hover:bg-indigo-50"
+                      onClick={() =>
+                        saveSuggestions(suggestions.filter((x) => x.id !== s.id))
+                      }
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1080,6 +2002,7 @@ function Community() {
     </section>
   );
 }
+
 
 /************** LIVE SESSION **************/
 function LiveSession() {
@@ -1111,76 +2034,334 @@ function Whiteboard() { const canvasRef = useRef<HTMLCanvasElement | null>(null)
 function NotesPad() { const [text, setText] = useState(""); return (<div className="space-y-2"><textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Type session notes…" className="w-full h-40 rounded-xl border p-2 text-sm" /><div className="text-xs text-slate-500">Autosave (mock)</div></div>); }
 function ResourcesList() { const items = [{ id: 1, title: "Quadratic formula cheat sheet", type: "PDF" }, { id: 2, title: "Factoring practice (10 problems)", type: "Worksheet" },]; return (<div className="space-y-2">{items.map(i => (<div key={i.id} className="p-2 rounded-lg border flex items-center justify-between"><div className="text-sm"><span className="font-medium">{i.title}</span> <span className="text-slate-500">• {i.type}</span></div><Button size="sm" variant="outline" className="rounded-xl" onClick={() => toast("Downloading (mock)")}>Download</Button></div>))}</div>); }
 
-/************** PROGRESS PAGE **************/
+/************** PROGRESS PAGE (Indigo–Violet styling) **************/
 function ProgressPage({ weakness }: { weakness: string[] }) {
   type Task = { id: string; title: string; subject: string; done: boolean; status?: "Planned" | "In Progress" | "Done" };
   type Activity = { id: string | number; type: "video" | "revision"; date: string; subject: string; tutor?: string; title: string; notes?: string; durationMin?: number };
-  const fallbackFocus = weakness?.length ? weakness : ["Algebra", "Essay Writing"]; const getStreak = () => Number(localStorage.getItem("streak") || 0);
-  const seedTasks = (): Task[] => { const base = fallbackFocus.slice(0, 3); const now = Date.now(); return base.map((subj, i) => ({ id: `${now}-${i}`, title: i === 0 ? `30 min practice on ${subj}` : i === 1 ? `Revise 1 chapter: ${subj}` : `1 quiz attempt: ${subj}`, subject: subj, done: false, status: "Planned" })); };
-  const loadTasks = (): Task[] => { try { const raw = localStorage.getItem("tasks_today"); if (raw) { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed; } } catch { } const seeded = seedTasks(); localStorage.setItem("tasks_today", JSON.stringify(seeded)); return seeded; };
-  const [tasks, setTasks] = useState<Task[]>(loadTasks); const [streak] = useState(getStreak());
-  const SUBJECT_OPTIONS = Array.from(new Set(fallbackFocus)); const [newTitle, setNewTitle] = useState(""); const [newSubject, setNewSubject] = useState<string>(SUBJECT_OPTIONS[0] || "General");
-  const toggleTask = (id: string) => setTasks(prev => prev.map(t => (t.id === id ? { ...t, done: !t.done, status: !t.done ? "Done" : "Planned" } : t)));
-  const addTask = () => { const title = newTitle.trim(); if (!title) return; const task: Task = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, title, subject: newSubject || "General", done: false, status: "Planned" }; setTasks(prev => [task, ...prev]); setNewTitle(""); toast.success("Task added"); };
-  const removeTask = (id: string) => setTasks(prev => prev.filter(t => t.id !== id)); const clearCompleted = () => setTasks(prev => prev.filter(t => !t.done));
-  useEffect(() => { try { localStorage.setItem("tasks_today", JSON.stringify(tasks)); } catch { } }, [tasks]);
-  const doneCount = tasks.filter(t => t.done).length; const pct = Math.round((doneCount / Math.max(tasks.length, 1)) * 100);
-  const [activities] = useState<Activity[]>([{ id: 9001, type: "video", date: "2025-08-24", subject: "Mathematics", tutor: "Tutor Aisha", title: "Video session with Tutor Aisha", notes: "Factoring quadratics (ax²+bx+c)", durationMin: 45 }, { id: 9002, type: "revision", date: "2025-08-24", subject: "English", title: "Revised: Essay thesis & intros", notes: "Stronger thesis w/ clear stance" }, { id: 9003, type: "video", date: "2025-08-25", subject: "Physics", tutor: "Tutor Chen", title: "Video session with Tutor Chen", notes: "Newton’s Second Law problems", durationMin: 30 }, { id: 9004, type: "revision", date: "2025-08-26", subject: "Mathematics", title: "Revised: Algebra practice set", notes: "10 problems on linear equations" },]);
-  const ALL_SUBJECTS = Array.from(new Set([...fallbackFocus, ...activities.map(a => a.subject), "Mathematics", "English", "Physics", "Chemistry", "Biology", "Essay Writing", "Algebra"]));
-  const [filterType, setFilterType] = useState<"all" | "video" | "revision">("all"); const [filterSubject, setFilterSubject] = useState<string>("all");
-  const filteredActivities = useMemo(() => activities.filter(a => (filterType === "all" ? true : a.type === filterType) && (filterSubject === "all" ? true : a.subject === filterSubject)), [activities, filterType, filterSubject]);
-  const grouped = useMemo(() => { const m = new Map<string, Activity[]>(); for (const a of filteredActivities) { m.set(a.date, [...(m.get(a.date) || []), a]); } return Array.from(m.entries()).sort((a, b) => (a[0] > b[0] ? -1 : 1)); }, [filteredActivities]);
+
+  const fallbackFocus = weakness?.length ? weakness : ["Algebra", "Essay Writing"];
+  const getStreak = () => Number(localStorage.getItem("streak") || 0);
+
+  const seedTasks = (): Task[] => {
+    const base = fallbackFocus.slice(0, 3);
+    const now = Date.now();
+    return base.map((subj, i) => ({
+      id: `${now}-${i}`,
+      title:
+        i === 0
+          ? `30 min practice on ${subj}`
+          : i === 1
+          ? `Revise 1 chapter: ${subj}`
+          : `1 quiz attempt: ${subj}`,
+      subject: subj,
+      done: false,
+      status: "Planned",
+    }));
+  };
+
+  const loadTasks = (): Task[] => {
+    try {
+      const raw = localStorage.getItem("tasks_today");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    const seeded = seedTasks();
+    localStorage.setItem("tasks_today", JSON.stringify(seeded));
+    return seeded;
+  };
+
+  const [tasks, setTasks] = useState<Task[]>(loadTasks);
+  const [streak] = useState(getStreak());
+
+  const SUBJECT_OPTIONS = Array.from(new Set(fallbackFocus));
+  const [newTitle, setNewTitle] = useState("");
+  const [newSubject, setNewSubject] = useState<string>(SUBJECT_OPTIONS[0] || "General");
+
+  const toggleTask = (id: string) =>
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, done: !t.done, status: !t.done ? "Done" : "Planned" } : t
+      )
+    );
+
+  const addTask = () => {
+    const title = newTitle.trim();
+    if (!title) return;
+    const task: Task = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title,
+      subject: newSubject || "General",
+      done: false,
+      status: "Planned",
+    };
+    setTasks((prev) => [task, ...prev]);
+    setNewTitle("");
+    toast.success("Task added");
+  };
+
+  const removeTask = (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id));
+  const clearCompleted = () => setTasks((prev) => prev.filter((t) => !t.done));
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("tasks_today", JSON.stringify(tasks));
+    } catch {}
+  }, [tasks]);
+
+  const doneCount = tasks.filter((t) => t.done).length;
+  const pct = Math.round((doneCount / Math.max(tasks.length, 1)) * 100);
+
+  const [activities] = useState<Activity[]>([
+    { id: 9001, type: "video", date: "2025-08-24", subject: "Mathematics", tutor: "Tutor Aisha", title: "Video session with Tutor Aisha", notes: "Factoring quadratics (ax²+bx+c)", durationMin: 45 },
+    { id: 9002, type: "revision", date: "2025-08-24", subject: "English", title: "Revised: Essay thesis & intros", notes: "Stronger thesis w/ clear stance" },
+    { id: 9003, type: "video", date: "2025-08-25", subject: "Physics", tutor: "Tutor Chen", title: "Video session with Tutor Chen", notes: "Newton’s Second Law problems", durationMin: 30 },
+    { id: 9004, type: "revision", date: "2025-08-26", subject: "Mathematics", title: "Revised: Algebra practice set", notes: "10 problems on linear equations" },
+  ]);
+
+  const ALL_SUBJECTS = Array.from(new Set([...fallbackFocus, ...activities.map((a) => a.subject), "Mathematics", "English", "Physics", "Chemistry", "Biology", "Essay Writing", "Algebra"]));
+
+  const [filterType, setFilterType] = useState<"all" | "video" | "revision">("all");
+  const [filterSubject, setFilterSubject] = useState<string>("all");
+
+  const filteredActivities = useMemo(
+    () =>
+      activities.filter(
+        (a) =>
+          (filterType === "all" ? true : a.type === filterType) &&
+          (filterSubject === "all" ? true : a.subject === filterSubject)
+      ),
+    [activities, filterType, filterSubject]
+  );
+
+  const grouped = useMemo(() => {
+    const m = new Map<string, Activity[]>();
+    for (const a of filteredActivities) {
+      m.set(a.date, [...(m.get(a.date) || []), a]);
+    }
+    return Array.from(m.entries()).sort((a, b) => (a[0] > b[0] ? -1 : 1));
+  }, [filteredActivities]);
+
   return (
     <section className="grid md:grid-cols-2 gap-4">
       <div className="space-y-4">
-        <Card>
-          <CardHeader>
+        {/* Today’s Tasks — gradient header + indigo accents */}
+        <Card className="rounded-2xl overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white px-4 py-3">
+            <CardTitle className="text-lg">Today’s Tasks</CardTitle>
+            <CardDescription className="text-xs text-white/80">
+              Add, check off, and track progress
+            </CardDescription>
+          </div>
+
+          <CardContent className="space-y-4 mt-3">
             <div className="flex items-center justify-between">
-              <div><CardTitle>Today’s Tasks</CardTitle><CardDescription>Add, check off, and track progress</CardDescription></div>
-              <div className="p-3 rounded-xl border bg-slate-50"><div className="text-xs text-slate-600">Learning streak</div><div className="mt-1 text-2xl font-bold text-slate-900">{streak}</div></div>
+              <div className="p-3 rounded-xl border bg-indigo-50">
+                <div className="text-xs text-indigo-700">Learning streak</div>
+                <div className="mt-1 text-2xl font-bold text-slate-900">{streak}</div>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+
             <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
-              <Input placeholder="Add a task (e.g., 'Finish Algebra worksheet')" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="flex-1 min-w-[220px]" />
-              <Select value={newSubject} onValueChange={setNewSubject}><SelectTrigger className="w-48"><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent>{(SUBJECT_OPTIONS.length ? SUBJECT_OPTIONS : ["General"]).map(s => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent></Select>
-              <Button className="rounded-xl" onClick={addTask}>Add</Button>
+              <Input
+                placeholder="Add a task (e.g., 'Finish Algebra worksheet')"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="flex-1 min-w-[220px] rounded-xl"
+              />
+              <Select value={newSubject} onValueChange={setNewSubject}>
+                <SelectTrigger className="w-48 rounded-xl">
+                  <SelectValue placeholder="Subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(SUBJECT_OPTIONS.length ? SUBJECT_OPTIONS : ["General"]).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90"
+                onClick={addTask}
+              >
+                Add
+              </Button>
             </div>
-            <div><div className="flex justify-between text-sm mb-1"><span>{doneCount}/{tasks.length} completed</span><span>{pct}%</span></div><Progress value={pct} /></div>
+
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span>
+                  {doneCount}/{tasks.length} completed
+                </span>
+                <span>{pct}%</span>
+              </div>
+              <Progress value={pct} />
+            </div>
+
             <div className="space-y-2">
-              {tasks.map(t => (
-                <div key={t.id} className="flex items-center justify-between gap-3 p-2 rounded-lg border bg-white">
-                  <div className="flex items-center gap-3 min-w-0"><Checkbox checked={t.done} onCheckedChange={() => toggleTask(t.id)} /><div className="min-w-0"><div className={`text-sm ${t.done ? "line-through text-slate-400" : ""}`}>{t.title}</div><div className="mt-0.5 text-[11px] text-slate-500 truncate">Subject: {t.subject}</div></div></div>
-                  <div className="flex items-center gap-2 shrink-0"><span className={`text-[11px] px-2 py-0.5 rounded-full ${t.done ? "bg-emerald-100 text-emerald-700" : t.status === "In Progress" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-700"}`}>{t.done ? "Done" : t.status || "Planned"}</span><Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => removeTask(t.id)}>Remove</Button></div>
+              {tasks.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between gap-3 p-2 rounded-lg border bg-white"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Checkbox checked={t.done} onCheckedChange={() => toggleTask(t.id)} />
+                    <div className="min-w-0">
+                      <div className={`text-sm ${t.done ? "line-through text-slate-400" : ""}`}>
+                        {t.title}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-slate-500 truncate">
+                        Subject: {t.subject}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`text-[11px] px-2 py-0.5 rounded-full ${
+                        t.done
+                          ? "bg-emerald-100 text-emerald-700"
+                          : t.status === "In Progress"
+                          ? "bg-indigo-100 text-indigo-700"
+                          : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {t.done ? "Done" : t.status || "Planned"}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => removeTask(t.id)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               ))}
-              {tasks.length === 0 && <div className="text-sm text-slate-500">No tasks for today.</div>}
+              {tasks.length === 0 && (
+                <div className="text-sm text-slate-500">No tasks for today.</div>
+              )}
             </div>
-            <div className="flex items-center gap-2"><Button variant="outline" size="sm" className="rounded-xl" onClick={clearCompleted}>Clear completed</Button></div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl hover:bg-indigo-50"
+                onClick={clearCompleted}
+              >
+                Clear completed
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card><CardHeader><CardTitle>Focus Areas</CardTitle><CardDescription>Your current priorities</CardDescription></CardHeader><CardContent><div className="flex flex-wrap gap-2">{fallbackFocus.map(w => (<Badge key={w} variant="secondary" className="rounded-full">{w}</Badge>))}</div></CardContent></Card>
+
+        {/* Focus Areas — subtle indigo accents */}
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <CardTitle>Focus Areas</CardTitle>
+            <CardDescription>Your current priorities</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {fallbackFocus.map((w) => (
+                <Badge key={w} variant="secondary" className="rounded-full bg-indigo-50 text-indigo-700">
+                  {w}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      <Card>
-        <CardHeader><CardTitle>My Activity History</CardTitle><CardDescription>Video sessions with tutors & what you revised</CardDescription></CardHeader>
-        <CardContent className="space-y-3">
+
+      {/* My Activity History — gradient header + indigo chips */}
+      <Card className="rounded-2xl overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white px-4 py-3">
+          <CardTitle className="text-lg">My Activity History</CardTitle>
+          <CardDescription className="text-xs text-white/80">
+            Video sessions with tutors & what you revised
+          </CardDescription>
+        </div>
+
+        <CardContent className="space-y-3 mt-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}><SelectTrigger className="w-36"><SelectValue placeholder="Type" /></SelectTrigger><SelectContent><SelectItem value="all">All types</SelectItem><SelectItem value="video">Video sessions</SelectItem><SelectItem value="revision">Revisions</SelectItem></SelectContent></Select>
-            <Select value={filterSubject} onValueChange={setFilterSubject}><SelectTrigger className="w-48"><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent><SelectItem value="all">All subjects</SelectItem>{ALL_SUBJECTS.map(s => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent></Select>
+            <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+              <SelectTrigger className="w-36 rounded-xl">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="video">Video sessions</SelectItem>
+                <SelectItem value="revision">Revisions</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterSubject} onValueChange={setFilterSubject}>
+              <SelectTrigger className="w-48 rounded-xl">
+                <SelectValue placeholder="Subject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All subjects</SelectItem>
+                {ALL_SUBJECTS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
           <div className="space-y-4">
-            {grouped.length === 0 && <div className="text-sm text-slate-500">No activity matches your filters.</div>}
+            {grouped.length === 0 && (
+              <div className="text-sm text-slate-500">No activity matches your filters.</div>
+            )}
+
             {grouped.map(([date, items]) => (
               <div key={date}>
                 <div className="text-xs text-slate-500 mb-2">{date}</div>
                 <div className="space-y-2">
-                  {items.map(a => (
+                  {items.map((a) => (
                     <div key={a.id} className="p-3 rounded-lg border bg-white flex items-start gap-3">
-                      <div className="mt-0.5">{a.type === "video" ? <div className="w-9 h-9 rounded-md bg-black/80 grid place-items-center text-white text-[10px]">▶</div> : <div className="w-9 h-9 rounded-md bg-slate-200 grid place-items-center text-slate-700 text-[10px]">📘</div>}</div>
+                      <div className="mt-0.5">
+                        {a.type === "video" ? (
+                          <div className="w-9 h-9 rounded-md bg-slate-900 grid place-items-center text-white text-[10px]">
+                            ▶
+                          </div>
+                        ) : (
+                          <div className="w-9 h-9 rounded-md bg-indigo-50 grid place-items-center text-indigo-700 text-[10px]">
+                            📘
+                          </div>
+                        )}
+                      </div>
+
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify_between gap-3"><div className="font-medium truncate">{a.title}</div><span className="rounded-full text-xs px-2 py-0.5 bg-slate-100 text-slate-600">{a.subject}</span></div>
-                        <div className="mt-1 text-sm text-slate-700">{a.type === "video" && a.tutor ? <span>With <span className="font-medium">{a.tutor}</span>{a.durationMin ? ` • ${a.durationMin} min` : ""}</span> : <span>{a.notes || "Revision session"}</span>}</div>
-                        {a.type === "video" && (<div className="mt-2"><Button size="sm" variant="outline" className="rounded-xl" disabled>Watch replay (prototype)</Button></div>)}
+                        <div className="flex items-center justify_between gap-3">
+                          <div className="font-medium truncate">{a.title}</div>
+                          <span className="rounded-full text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700">
+                            {a.subject}
+                          </span>
+                        </div>
+
+                        <div className="mt-1 text-sm text-slate-700">
+                          {a.type === "video" && a.tutor ? (
+                            <span>
+                              With <span className="font-medium">{a.tutor}</span>
+                              {a.durationMin ? ` • ${a.durationMin} min` : ""}
+                            </span>
+                          ) : (
+                            <span>{a.notes || "Revision session"}</span>
+                          )}
+                        </div>
+
+                        {a.type === "video" && (
+                          <div className="mt-2">
+                            <Button size="sm" variant="outline" className="rounded-xl" disabled>
+                              Watch replay (prototype)
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1193,6 +2374,7 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
     </section>
   );
 }
+
 
 /************** Hidden runtime tests **************/
 function HiddenTests() {
