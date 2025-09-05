@@ -109,7 +109,6 @@ function AppInner() {
   const [role, setRole] = useState<Role>(null);
   const [authOpen, setAuthOpen] = useState(false);
 
-  // keep your existing profile/quiz state:
   const DEFAULTS = { name: "Alex", quizLevel: "Secondary", quizSubjects: ["Mathematics", "English"] as string[], quizAnswers: Array(SAMPLE_QUESTIONS.length).fill(-1) as number[], weakness: [] as string[] };
   const [name, setName] = useState(DEFAULTS.name);
   const [quizLevel, setQuizLevel] = useState(DEFAULTS.quizLevel as "Primary" | "Secondary" | "University" | string);
@@ -174,7 +173,6 @@ function AppInner() {
     navigate("/");
   };
 
-  // live banner only on /live
   const onLiveRoute = location.pathname === "/live";
 
   return (
@@ -207,7 +205,6 @@ function AppInner() {
         </div>
       )}
 
-      {/* Consistent page width & padding everywhere */}
       <main className="flex-1 w-full">
         <div className="max-w-6xl mx-auto px-10 py-8 md:py-10">
           <Routes>
@@ -384,23 +381,19 @@ function AuthModal({ open, onOpenChange, onLogin }: { open: boolean; onOpenChang
 }
 
 
-/************** LANDING (Bold hero + compact + carousel) **************/
+/************** LANDING **************/
 function Landing({ onGetStarted }: { onGetStarted: () => void }) {
 
   return (
     <section className="relative">
-      {/* subtle background accents */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-indigo-200/40 blur-3xl" />
         <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-violet-200/40 blur-3xl" />
       </div>
 
-      {/* <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-6"> */}
       <div>
-        {/* HERO — colorful banner that dominates */}
         <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white ring-1 ring-white/10 shadow-lg">
           <div className="grid md:grid-cols-2 gap-0">
-            {/* Left: copy + CTA */}
             <div className="p-6 md:p-8">
               <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 bg-white/15 text-xs font-medium backdrop-blur">
                 <Sparkles className="w-3 h-3" />
@@ -430,7 +423,6 @@ function Landing({ onGetStarted }: { onGetStarted: () => void }) {
             </div>
 
             <div className="relative h-full min-h-[240px] w-full overflow-hidden rounded-r-3xl">
-              {/* auto-slideshow */}
               <HeroSlideshow
                 images={[
                   "/hero1.jpg",
@@ -438,22 +430,19 @@ function Landing({ onGetStarted }: { onGetStarted: () => void }) {
                   "/hero3.jpg",
                   "/hero4.jpg",
                 ]}
-                interval={4000} // change every 4s
+                interval={4000}
               />
             </div>
 
           </div>
         </div>
 
-        {/* WHY TUTORLY — focused on tutoring, calmer styling */}
-        {/* WHY TUTORLY — focused on tutoring */}
         <div className="mt-8 rounded-2xl bg-white ring-1 ring-slate-200 p-6">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="text-xl font-bold">Why Tutorly</h2>
             <span className="text-xs text-slate-500">Built for effective 1:1 tutoring</span>
           </div>
 
-          {/* Core purpose: 3 colorful cards */}
           <div className="mt-4 grid md:grid-cols-3 gap-4">
             <ColorFeature
               tone="indigo"
@@ -517,7 +506,7 @@ function Landing({ onGetStarted }: { onGetStarted: () => void }) {
   );
 }
 
-/* ---------- helpers (no new deps) ---------- */
+/* ---------- helpers ---------- */
 
 function HeroSlideshow({ images, interval = 4000 }: { images: string[]; interval?: number }) {
   const [index, setIndex] = React.useState(0);
@@ -625,7 +614,6 @@ function NeutralTestimonialCarousel({
         <ChevronLeft className="w-4 h-4" />
       </button>
 
-      {/* scroller: x-scroll with extra top padding so avatars can 'float' without clipping */}
       <div
         ref={ref}
         className="overflow-x-auto overflow-y-visible scroll-smooth pt-8 pb-2"
@@ -659,14 +647,12 @@ function NeutralTestimonialCard({
   quote: string;
   avatar?: string;
 }) {
-  // Neutral, compact, with avatar “popping” out
   return (
     <div
       data-card
       className="relative min-w-[240px] max-w-[260px] scroll-ml-4 scroll-mr-4"
       style={{ scrollSnapAlign: "start" }}
     >
-      {/* avatar that overlaps the top */}
       <div className="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-white ring-1 ring-slate-200 overflow-hidden grid place-items-center">
         {avatar ? (
           <img src={avatar} alt={name} className="w-full h-full object-cover" />
@@ -675,7 +661,6 @@ function NeutralTestimonialCard({
         )}
       </div>
 
-      {/* card body */}
       <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 text-center">
         <div className="mt-4 text-sm font-medium">{name}</div>
         <div className="mt-1 text-xs text-slate-600 leading-relaxed">
@@ -763,7 +748,6 @@ function Dashboard(
 ) {
   const focus = (weakness && weakness.length ? weakness : ["Algebra", "Essay Writing"]).slice(0, 3);
 
-  // streak + tasks preview
   const [streak, setStreak] = React.useState(getInitialStreak());
   const allTasks: Array<{ id: string; title: string; subject?: string; done?: boolean }> = (() => {
     try { const raw = localStorage.getItem("tasks_today"); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr) ? arr : []; }
@@ -783,9 +767,7 @@ function Dashboard(
   return (
     <section className="w-full">
       <div className="max-w-5xl mx-auto">
-        {/* OVERVIEW CARD: banner + shortcuts in one box */}
         <Card className="rounded-2xl overflow-hidden mb-4">
-          {/* Slim gradient banner */}
           <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white p-4 md:p-5">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
@@ -802,7 +784,6 @@ function Dashboard(
             </div>
           </div>
 
-          {/* Shortcuts (centered) */}
           <div className="p-3 md:p-4">
             <div className="mx-auto max-w-fit flex flex-wrap items-center justify-center gap-4 md:gap-5">
               <ShortcutTile tone="indigo" icon={<Search className="w-4 h-4" />} title="Find Tutor" onClick={() => onNavigatePath("tutors")} />
@@ -813,9 +794,7 @@ function Dashboard(
           </div>
         </Card>
 
-        {/* MAIN: 1 row — Check-in | Tasks | Next Session */}
         <div className="grid gap-4 md:grid-cols-[0.8fr_1.7fr_1.3fr]">
-          {/* Daily Check-in */}
           <Card className="rounded-2xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -833,7 +812,6 @@ function Dashboard(
             </CardContent>
           </Card>
 
-          {/* Today’s Tasks */}
           <Card className="rounded-2xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -872,7 +850,6 @@ function Dashboard(
             </CardContent>
           </Card>
 
-          {/* Next Session */}
           <Card className="rounded-2xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -898,8 +875,7 @@ function Dashboard(
 }
 
 
-
-/* ---------- tiny helpers ---------- */
+/* ---------- tiny ---------- */
 function StatPill({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-full bg-white/10 ring-1 ring-white/20 px-3 py-1.5 text-xs flex items-center gap-2">
@@ -943,8 +919,6 @@ function ShortcutTile({
 
   );
 }
-
-
 
 
 
@@ -1086,7 +1060,6 @@ function Community() {
         </CardContent>
       </Card>
       <div className="space-y-4">
-        {/* <Card><CardHeader><CardTitle>Daily Check-in</CardTitle><CardDescription>Maintain your streak</CardDescription></CardHeader><CardContent className="space-y-3"><div className="text-4xl font-bold">{streak}</div><div className="text-sm text-slate-500">day streak</div><Button className="rounded-xl" onClick={checkIn}>Check in for today</Button></CardContent></Card> */}
         <Card className="rounded-2xl">
           <CardHeader><CardTitle>People You May Know</CardTitle><CardDescription>Connect with learners who share your interests</CardDescription></CardHeader>
           <CardContent className="space-y-3">
@@ -1223,7 +1196,8 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
 
 /************** Hidden runtime tests **************/
 function HiddenTests() {
-  useEffect(() => { try { const el = document.querySelector('[data-testid="topnav-tabs"]'); console.assert(!!el, "[TEST] TopNav Tabs not found in DOM"); const triggers = el?.querySelectorAll('[role="tab"]') || []; console.assert(triggers.length >= 5, "[TEST] Expected at least 5 topnav tabs"); } catch (e) { } }, []);
+  useEffect(() => {
+  }, []);
   return (
     <div style={{ display: "none" }} aria-hidden>
       <Tabs defaultValue="a">

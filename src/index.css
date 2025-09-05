@@ -64,10 +64,8 @@
     overflow-y: scroll;
   }
 
-  /* Prevent tiny horizontal nudge across the app */
   body {
     overflow-x: clip;
-    /* better than hidden, avoids scrollbars without clipping shadows */
   }
 
   body[data-radix-scroll-lock],
