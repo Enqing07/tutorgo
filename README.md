@@ -1,9 +1,9 @@
-# Tutorly
+# TutorGo
 
 - **Track:** Student Lifestyle  
 - **Problem Statement:** Tutoring for Students
   
-Tutorly is a modern tutoring platform designed to make learning more interactive and accessible.  It provides students with tools to find the right tutors, track their learning progress, and engage in community-based study sessions.
+TutorGo is a modern tutoring platform designed to make learning more interactive and accessible.  It provides students with tools to find the right tutors, track their learning progress, and engage in community-based study sessions.
 
 ## Features
 - 🔎 **Find Tutors**: Browse and connect with tutors based on subjects and expertise.  
