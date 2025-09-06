@@ -54,13 +54,13 @@ const SAMPLE_QUESTIONS = [
 ];
 const SUBJECT_TOPIC_MAP: Record<string, string> = { Mathematics: "Algebra", English: "Essay Writing", Physics: "Physics", Chemistry: "Chemistry", Biology: "Biology" };
 
-// ************ MOCK VIDEO LIBRARY (per tutor) ************
+// ************ MOCK VIDEO LIBRARY ************
 type TutorVideo = { id: string | number; title: string; duration: string; src: string; thumbnail?: string };
 
 const MOCK_TUTOR_VIDEOS: Record<number, TutorVideo[]> = {
   1: [
-    { id: "a1", title: "Factoring Quadratics — Quick Tips", duration: "08:42", src: "/videos/aisha_factoring.mp4", thumbnail: "/public/FactorQuadratics.jpg" },
-    { id: "a2", title: "Algebra Warm-ups (5 problems)", duration: "12:10", src: "/videos/aisha_warmups.mp4", thumbnail: "/public/AlgebraWarmup.jpg" },
+    { id: "a1", title: "Factoring Quadratics — Quick Tips", duration: "08:42", src: "/videos/aisha_factoring.mp4", thumbnail: "FactorQuadratics.jpg" },
+    { id: "a2", title: "Algebra Warm-ups (5 problems)", duration: "12:10", src: "/videos/aisha_warmups.mp4", thumbnail: "/AlgebraWarmup.jpg" },
   ],
   2: [
     { id: "b1", title: "Thesis Statements: Do & Don’t", duration: "06:58", src: "/videos/ben_thesis.mp4", thumbnail: "/thumbs/ben1.jpg" },
@@ -496,7 +496,7 @@ function Landing({ onGetStarted }: { onGetStarted: () => void }) {
             />
           </div>
 
-          {/* Secondary details: small pills */}
+          {/* Secondary details */}
           <div className="mt-6 flex flex-wrap gap-2">
             <NeutralPill icon={<School className="w-4 h-4" />} label="Qualified tutors" />
             <NeutralPill icon={<Clock className="w-4 h-4" />} label="Flexible times" />
@@ -505,7 +505,7 @@ function Landing({ onGetStarted }: { onGetStarted: () => void }) {
           </div>
         </div>
 
-        {/* WHAT LEARNERS SAY — neutral, compact, avatar pops out */}
+        {/* WHAT LEARNERS SAY */}
         <div className="mt-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-bold">What learners say</h2>
@@ -525,8 +525,6 @@ function Landing({ onGetStarted }: { onGetStarted: () => void }) {
     </section>
   );
 }
-
-/* ---------- helpers ---------- */
 
 function HeroSlideshow({ images, interval = 4000 }: { images: string[]; interval?: number }) {
   const [index, setIndex] = React.useState(0);
@@ -624,7 +622,6 @@ function NeutralTestimonialCarousel({
 
   return (
     <div className="relative">
-      {/* arrows */}
       <button
         type="button"
         aria-label="Previous"
@@ -895,7 +892,6 @@ function Dashboard(
 }
 
 
-/* ---------- tiny ---------- */
 function StatPill({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-full bg-white/10 ring-1 ring-white/20 px-3 py-1.5 text-xs flex items-center gap-2">
@@ -941,7 +937,7 @@ function ShortcutTile({
 }
 
 
-/*** AI Assistant Panel (mock) ***/
+/*** AI Assistant Panel ***/
 function AIAssistantPanel({
   subjectFilter,
   highlight = false,
@@ -958,13 +954,12 @@ function AIAssistantPanel({
         subjectFilter === "Mathematics"
           ? "Hi! Stuck on algebra or calculus? Share a problem and I’ll walk through the steps."
           : subjectFilter === "English"
-          ? "Need help with thesis statements or structure? Paste a prompt and I’ll suggest an outline."
-          : "Ask me any study question—I'll explain step by step.",
+            ? "Need help with thesis statements or structure? Paste a prompt and I’ll suggest an outline."
+            : "Ask me any study question—I'll explain step by step.",
     },
   ]);
   const [input, setInput] = useState("");
 
-  // very simple mock reply generator; swap with your backend call
   const generateAnswer = (q: string) => {
     const s = subjectFilter;
     const lower = q.toLowerCase();
@@ -1009,7 +1004,6 @@ function AIAssistantPanel({
     setMessages((m) => [...m, my]);
     setInput("");
 
-    // mock async AI response
     setTimeout(() => {
       const ai: Msg = { id: cryptoId(), from: "ai", text: generateAnswer(text) };
       setMessages((m) => [...m, ai]);
@@ -1035,16 +1029,14 @@ function AIAssistantPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* history */}
         <div className="max-h-56 overflow-auto space-y-2 pr-1">
           {messages.map((m) => (
             <div
               key={m.id}
-              className={`text-sm px-3 py-2 rounded-xl ${
-                m.from === "me"
-                  ? "bg-slate-900 text-white ml-auto max-w-[80%] rounded-br-md"
-                  : "bg-slate-50 border max-w-[85%] rounded-bl-md"
-              }`}
+              className={`text-sm px-3 py-2 rounded-xl ${m.from === "me"
+                ? "bg-slate-900 text-white ml-auto max-w-[80%] rounded-br-md"
+                : "bg-slate-50 border max-w-[85%] rounded-bl-md"
+                }`}
               style={{ width: "fit-content" }}
             >
               {m.text.split("\n").map((line, i) => (
@@ -1054,15 +1046,14 @@ function AIAssistantPanel({
           ))}
         </div>
 
-        {/* input */}
         <div className="flex items-center gap-2">
           <Input
             placeholder={
               subjectFilter === "Mathematics"
                 ? "e.g., How to solve 2x + 6 = 14?"
                 : subjectFilter === "English"
-                ? "e.g., Help me write a thesis on climate policy"
-                : "Ask a study question…"
+                  ? "e.g., Help me write a thesis on climate policy"
+                  : "Ask a study question…"
             }
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -1075,7 +1066,6 @@ function AIAssistantPanel({
           </Button>
         </div>
 
-        {/* quick suggestions */}
         <div className="flex flex-wrap gap-2 pt-1">
           {subjectFilter === "Mathematics" && (
             <>
@@ -1134,7 +1124,6 @@ function TutorDiscovery({ onNavigatePath }: { onNavigatePath: (s: Screen) => voi
     [subjectFilter]
   );
 
-  // --- NEW: saved tutor ids (persisted) ---
   const [savedIds, setSavedIds] = useState<number[]>(
     () => storage.get<number[]>("saved_tutors", [])
   );
@@ -1147,7 +1136,6 @@ function TutorDiscovery({ onNavigatePath }: { onNavigatePath: (s: Screen) => voi
     });
   };
 
-  // --- NEW: open message dialog for a saved tutor ---
   const [msgOpen, setMsgOpen] = useState(false);
   const [msgTutor, setMsgTutor] = useState<typeof MOCK_TUTORS[number] | null>(null);
   const openMessage = (tutor: typeof MOCK_TUTORS[number]) => {
@@ -1160,7 +1148,6 @@ function TutorDiscovery({ onNavigatePath }: { onNavigatePath: (s: Screen) => voi
   return (
     <section className="w-full">
       <section className="space-y-4">
-        {/* Filter row */}
         <div className="flex flex-wrap items-center gap-3">
           <Select value={subjectFilter} onValueChange={(v) => setSubjectFilter(v as any)}>
             <SelectTrigger className="w-56">
@@ -1178,10 +1165,8 @@ function TutorDiscovery({ onNavigatePath }: { onNavigatePath: (s: Screen) => voi
           <div className="text-sm text-slate-500">{tutors.length} tutors</div>
         </div>
 
-        {/* AI Tutor panel first */}
         <AIAssistantPanel subjectFilter={subjectFilter} highlight />
 
-        {/* NEW: Saved Tutors panel */}
         <SavedTutorsPanel
           savedIds={savedIds}
           onMessage={openMessage}
@@ -1216,7 +1201,6 @@ function TutorDiscovery({ onNavigatePath }: { onNavigatePath: (s: Screen) => voi
                   ))}
                 </div>
 
-                {/* NEW: tiny row to Save / Message */}
                 <div className="pt-1 flex items-center gap-2 text-xs">
                   <Button
                     size="sm"
@@ -1292,7 +1276,6 @@ function TutorDiscovery({ onNavigatePath }: { onNavigatePath: (s: Screen) => voi
           </Card>
         )}
 
-        {/* NEW: Message dialog */}
         <MessageTutorDialog
           open={msgOpen}
           onOpenChange={setMsgOpen}
@@ -1453,11 +1436,10 @@ function MessageTutorDialog({
               {messages.map((m) => (
                 <div
                   key={m.id}
-                  className={`text-sm px-3 py-2 rounded-xl w-fit ${
-                    m.from === "me"
-                      ? "bg-slate-900 text-white ml-auto rounded-br-md"
-                      : "bg-white border rounded-bl-md"
-                  }`}
+                  className={`text-sm px-3 py-2 rounded-xl w-fit ${m.from === "me"
+                    ? "bg-slate-900 text-white ml-auto rounded-br-md"
+                    : "bg-white border rounded-bl-md"
+                    }`}
                 >
                   {m.text}
                 </div>
@@ -1501,13 +1483,11 @@ function TutorVideos() {
   const tutor = MOCK_TUTORS.find((t) => t.id === idNum);
   const videos = MOCK_TUTOR_VIDEOS[idNum] || [];
 
-  // refs to control multiple videos
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   const playThis = (id: string | number) => {
     const key = String(id);
-    // pause all other videos
     Object.entries(videoRefs.current).forEach(([vid, el]) => {
       if (vid !== key && el && !el.paused) el.pause();
     });
@@ -1637,10 +1617,9 @@ function TutorVideos() {
   );
 }
 
-/************** STUDY BUDDY (Colorful) **************/
+/************** STUDY BUDDY **************/
 type ChatMsg = { id: string; text: string; ts: number; from: "me" | "them" };
 
-// Subject → tones
 const toneFor = (subject?: string) => {
   switch (subject) {
     case "Mathematics":
@@ -1673,7 +1652,6 @@ function StudyBuddy({ onNavigatePath }: { onNavigatePath: (s: Screen) => void })
 
   return (
     <section className="grid md:grid-cols-[320px_minmax(0,1fr)] gap-4 min-h-[calc(100vh-160px)]">
-      {/* Left chat list */}
       <Card className="overflow-hidden rounded-2xl flex flex-col border border-slate-200 bg-white">
         <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white">
           <div className="px-4 py-3">
@@ -1770,7 +1748,6 @@ function ChatWindow({
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Gradient Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white flex items-center gap-3">
         <Avatar className="w-9 h-9 shrink-0 ring-1 ring-white/30">
           <AvatarFallback className="bg-white text-indigo-600 font-bold">
@@ -1786,7 +1763,6 @@ function ChatWindow({
         </div>
       </div>
 
-      {/* Chat messages */}
       <div
         ref={viewportRef}
         className="flex-1 min-h-0 overflow-y-auto bg-[rgb(248,250,252)] p-3"
@@ -1836,8 +1812,7 @@ function ChatBubble({ children, you, ts }: { children: React.ReactNode; you?: bo
 
 
 
-/************** Community (Unified Blue) **************/
-/************** Community (Indigo-Violet Blue) **************/
+/************** Community **************/
 function Community() {
   const [feed, setFeed] = useState(getFeed());
   const [post, setPost] = useState("");
@@ -1863,11 +1838,13 @@ function Community() {
 
   const addPost = () => {
     if (!post.trim()) return;
+    const now = Date.now();
     const newPost = {
-      id: Math.random(),
+      id: now,
       name: "You",
-      content: post,
-      ts: new Date().toISOString().slice(0, 10),
+      content: post.trim(),
+      ts: new Date(now).toISOString(),
+      createdAt: now,
     };
     pushFeed(newPost);
     setFeed(getFeed());
@@ -1883,11 +1860,13 @@ function Community() {
   };
 
   const connectWith = (s: Suggestion) => {
+    const now = Date.now();
     pushFeed({
-      id: Math.random(),
+      id: now,
       name: "You",
       content: `connected with ${s.name} 🎉`,
-      ts: new Date().toISOString().slice(0, 10),
+      ts: new Date(now).toISOString(),
+      createdAt: now,
     });
     setFeed(getFeed());
     saveSuggestions(suggestions.filter((x) => x.id !== s.id));
@@ -1895,7 +1874,6 @@ function Community() {
 
   return (
     <section className="grid md:grid-cols-3 gap-4">
-      {/* Feed */}
       <Card className="md:col-span-2 rounded-2xl overflow-hidden">
         <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white px-4 py-3">
           <CardTitle className="text-lg">Community Feed</CardTitle>
@@ -1918,25 +1896,34 @@ function Community() {
               Post
             </Button>
           </div>
+
           <div className="space-y-3">
-            {feed.map((item) => (
-              <Card key={item.id} className="rounded-xl hover:shadow-md transition">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start gap-2">
-                    <Avatar className="w-8 h-8 shrink-0 ring-1 ring-indigo-200">
-                      <AvatarFallback className="text-xs bg-indigo-100 text-indigo-700">
-                        {item.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-sm leading-tight">
-                      <span className="font-medium">{item.name}</span>{" "}
-                      <span className="text-slate-500">• {item.ts}</span>
+            {[...feed]
+              .sort((a, b) => {
+                const aTime = typeof a.createdAt === "number" ? a.createdAt : Date.parse(a.ts);
+                const bTime = typeof b.createdAt === "number" ? b.createdAt : Date.parse(b.ts);
+                return bTime - aTime;
+              })
+              .map((item) => (
+                <Card key={item.id} className="rounded-xl hover:shadow-md transition">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start gap-2">
+                      <Avatar className="w-8 h-8 shrink-0 ring-1 ring-indigo-200">
+                        <AvatarFallback className="text-xs bg-indigo-100 text-indigo-700">
+                          {item.name?.[0] ?? "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-sm leading-tight">
+                        <span className="font-medium">{item.name}</span>{" "}
+                        <span className="text-slate-500">
+                          • {new Date(item.ts).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0 text-sm">{item.content}</CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent className="pt-0 text-sm">{item.content}</CardContent>
+                </Card>
+              ))}
           </div>
         </CardContent>
       </Card>
@@ -1944,9 +1931,14 @@ function Community() {
       {/* Suggestions */}
       <div className="space-y-4">
         <Card className="rounded-2xl">
-          <CardHeader><CardTitle>People You May Know</CardTitle><CardDescription>Connect with learners who share your interests</CardDescription></CardHeader>
+          <CardHeader>
+            <CardTitle>People You May Know</CardTitle>
+            <CardDescription>Connect with learners who share your interests</CardDescription>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {suggestions.length === 0 && (<div className="text-sm text-slate-500">No more suggestions for now.</div>)}
+            {suggestions.length === 0 && (
+              <div className="text-sm text-slate-500">No more suggestions for now.</div>
+            )}
             {suggestions.map((s) => (
               <div
                 key={s.id}
@@ -2034,7 +2026,7 @@ function Whiteboard() { const canvasRef = useRef<HTMLCanvasElement | null>(null)
 function NotesPad() { const [text, setText] = useState(""); return (<div className="space-y-2"><textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Type session notes…" className="w-full h-40 rounded-xl border p-2 text-sm" /><div className="text-xs text-slate-500">Autosave (mock)</div></div>); }
 function ResourcesList() { const items = [{ id: 1, title: "Quadratic formula cheat sheet", type: "PDF" }, { id: 2, title: "Factoring practice (10 problems)", type: "Worksheet" },]; return (<div className="space-y-2">{items.map(i => (<div key={i.id} className="p-2 rounded-lg border flex items-center justify-between"><div className="text-sm"><span className="font-medium">{i.title}</span> <span className="text-slate-500">• {i.type}</span></div><Button size="sm" variant="outline" className="rounded-xl" onClick={() => toast("Downloading (mock)")}>Download</Button></div>))}</div>); }
 
-/************** PROGRESS PAGE (Indigo–Violet styling) **************/
+/************** PROGRESS PAGE  **************/
 function ProgressPage({ weakness }: { weakness: string[] }) {
   type Task = { id: string; title: string; subject: string; done: boolean; status?: "Planned" | "In Progress" | "Done" };
   type Activity = { id: string | number; type: "video" | "revision"; date: string; subject: string; tutor?: string; title: string; notes?: string; durationMin?: number };
@@ -2051,8 +2043,8 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
         i === 0
           ? `30 min practice on ${subj}`
           : i === 1
-          ? `Revise 1 chapter: ${subj}`
-          : `1 quiz attempt: ${subj}`,
+            ? `Revise 1 chapter: ${subj}`
+            : `1 quiz attempt: ${subj}`,
       subject: subj,
       done: false,
       status: "Planned",
@@ -2066,7 +2058,7 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) return parsed;
       }
-    } catch {}
+    } catch { }
     const seeded = seedTasks();
     localStorage.setItem("tasks_today", JSON.stringify(seeded));
     return seeded;
@@ -2107,7 +2099,7 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
   useEffect(() => {
     try {
       localStorage.setItem("tasks_today", JSON.stringify(tasks));
-    } catch {}
+    } catch { }
   }, [tasks]);
 
   const doneCount = tasks.filter((t) => t.done).length;
@@ -2146,7 +2138,6 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
   return (
     <section className="grid md:grid-cols-2 gap-4">
       <div className="space-y-4">
-        {/* Today’s Tasks — gradient header + indigo accents */}
         <Card className="rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white px-4 py-3">
             <CardTitle className="text-lg">Today’s Tasks</CardTitle>
@@ -2219,13 +2210,12 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span
-                      className={`text-[11px] px-2 py-0.5 rounded-full ${
-                        t.done
-                          ? "bg-emerald-100 text-emerald-700"
-                          : t.status === "In Progress"
+                      className={`text-[11px] px-2 py-0.5 rounded-full ${t.done
+                        ? "bg-emerald-100 text-emerald-700"
+                        : t.status === "In Progress"
                           ? "bg-indigo-100 text-indigo-700"
                           : "bg-slate-100 text-slate-700"
-                      }`}
+                        }`}
                     >
                       {t.done ? "Done" : t.status || "Planned"}
                     </span>
@@ -2258,7 +2248,6 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
           </CardContent>
         </Card>
 
-        {/* Focus Areas — subtle indigo accents */}
         <Card className="rounded-2xl">
           <CardHeader>
             <CardTitle>Focus Areas</CardTitle>
@@ -2276,7 +2265,6 @@ function ProgressPage({ weakness }: { weakness: string[] }) {
         </Card>
       </div>
 
-      {/* My Activity History — gradient header + indigo chips */}
       <Card className="rounded-2xl overflow-hidden">
         <div className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white px-4 py-3">
           <CardTitle className="text-lg">My Activity History</CardTitle>
