@@ -23,52 +23,11 @@ type Role = "student" | "tutor" | null;
 /************** UTIL & STORAGE **************/
 const cn = (...args: (string | false | undefined)[]) => args.filter(Boolean).join(" ");
 const storage = {
-  get<T>(k: string, fallback: T): T {
-    try {
-      const v = localStorage.getItem(k);
-      return v ? (JSON.parse(v) as T) : fallback;
-    } catch {
-      return fallback;
-    }
-  },
-
-  set<T>(k: string, v: T) {
-    try {
-      localStorage.setItem(k, JSON.stringify(v));
-    } catch {}
-  },
-
-  del(k: string) {
-    try {
-      localStorage.removeItem(k);
-    } catch {}
-  },
-
-  clearAll() {
-    // wipe known keys
-    const KEYS = [
-      "auth",
-      "profile",
-      "streak",
-      "feed",
-      "weakness",
-      "name",
-      "tasks_today",
-      "pymk",
-      "quizSubjects",
-      "saved_tutors",
-    ];
-    KEYS.forEach((k) => this.del(k));
-
-    // wipe all tutor threads
-    Object.keys(localStorage).forEach((k) => {
-      if (k.startsWith("tutor_thread_")) {
-        localStorage.removeItem(k);
-      }
-    });
-  },
+  get<T>(k: string, fallback: T): T { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) as T : fallback; } catch { return fallback; } },
+  set<T>(k: string, v: T) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { } },
+  del(k: string) { try { localStorage.removeItem(k); } catch { } },
+  clearAll() { ["auth", "profile", "streak", "feed", "weakness", "name", "tasks_today", "pymk", "quizSubjects"].forEach((k) => this.del(k)); }
 };
-
 const cryptoId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const timeShort = (ts: number) => { const d = new Date(ts); const hh = d.getHours().toString().padStart(2, "0"); const mm = d.getMinutes().toString().padStart(2, "0"); return `${hh}:${mm}`; };
 const getInitialStreak = () => Number(localStorage.getItem("streak") || 0);
@@ -235,11 +194,7 @@ function AppInner() {
   const onLiveRoute = location.pathname === "/live";
 
   return (
-<<<<<<< HEAD
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-indigo-50 to-white text-slate-900">
-=======
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-indigo-50 to-white text-slate-900" >
->>>>>>> d8f804d70dffacbdbab3dab4bdab8f94b20133ac
       <Toaster position="top-right" richColors />
 
       <AppHeader
