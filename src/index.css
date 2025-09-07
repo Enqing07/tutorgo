@@ -60,9 +60,18 @@
     --chart-5: 340 75% 55%
   }
 
+<<<<<<< HEAD
   /* optional; keeps a permanent gutter */
+=======
+  html {
+    overflow-y: scroll;
+  }
+
+  /* Prevent tiny horizontal nudge across the app */
+>>>>>>> d8f804d70dffacbdbab3dab4bdab8f94b20133ac
   body {
     overflow-x: clip;
+    /* better than hidden, avoids scrollbars without clipping shadows */
   }
 }
 
@@ -74,4 +83,31 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Always reserve space for the vertical scrollbar (prevents width change) */
+html { scrollbar-gutter: stable both-edges; }
+
+/* Keep a vertical track present and kill horizontal flashes */
+body {
+  overflow-y: scroll;
+  overflow-x: clip;
+  margin: 0;            /* just in case preflight didn't apply */
+  padding-right: 0 !important; /* nuke injected compensation */
+}
+
+/* Some libs (Radix/RemoveScroll/etc.) inject body padding-right or data flags */
+:root { --removed-body-scroll-bar-size: 0px !important; }  /* neutralize their CSS var */
+body[style*="padding-right"],
+html[style*="padding-right"],
+body[data-radix-scroll-lock],
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* (Optional) if a lib hides scroll with overflow: hidden and causes a jump,
+   keep it visible during light menus like DropdownMenu. Comment out if it breaks modals. */
+body[style*="overflow: hidden"]:not([data-dialog-open]) {
+  overflow: scroll !important;
 }

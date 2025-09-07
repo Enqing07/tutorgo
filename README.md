@@ -20,7 +20,7 @@ TutorGo is a modern tutoring platform designed to make learning more interactive
 ## Getting Started
 Clone the repo and install dependencies:
 ```bash
-git clone https://github.com/Enqing07/tutorly.git
-cd tutorly
+git clone https://github.com/Enqing07/tutorgo.git
+cd tutorgo
 npm install
 npm run dev
