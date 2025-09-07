@@ -60,21 +60,10 @@
     --chart-5: 340 75% 55%
   }
 
-  html {
-    overflow-y: scroll;
-  }
-
+  /* optional; keeps a permanent gutter */
   body {
     overflow-x: clip;
   }
-
-  body[data-radix-scroll-lock],
-  body[data-scroll-locked] {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-  }
-
-
 }
 
 @layer base {

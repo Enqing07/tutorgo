@@ -194,7 +194,7 @@ function AppInner() {
   const onLiveRoute = location.pathname === "/live";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-indigo-50 to-white text-slate-900" style={{ scrollbarGutter: "stable both-edges" }}>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-indigo-50 to-white text-slate-900">
       <Toaster position="top-right" richColors />
 
       <AppHeader
